@@ -22,7 +22,7 @@
       vars:
         service_state: "{{ ansible_facts.services[kafka_controller_service_name + '.service'].state | default('unknown') }}"
       tags: systemd
-      
+
     - name: Group Hosts by Installation Pattern
       group_by:
         key: kafka_controller_{{install_pattern}}
