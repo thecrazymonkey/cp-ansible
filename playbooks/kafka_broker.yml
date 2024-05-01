@@ -10,12 +10,18 @@
 
     - name: Populate service facts
       service_facts:
+      tags: systemd
+
+    - name: Determine Installation Pattern - Parallel or Serial - No Service 
+      set_fact:
+        install_pattern: "{{ 'parallel' if kafka_broker_deployment_strategy == 'parallel' else 'serial' }}"
 
     - name: Determine Installation Pattern - Parallel or Serial
       set_fact:
         install_pattern: "{{ 'parallel' if service_state != 'running' or kafka_broker_deployment_strategy == 'parallel' else 'serial' }}"
       vars:
         service_state: "{{ ansible_facts.services[kafka_broker_service_name + '.service'].state | default('unknown') }}"
+      tags: systemd
 
     - name: Group Hosts by Installation Pattern
       group_by:
