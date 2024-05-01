@@ -12,7 +12,7 @@
       service_facts:
       tags: systemd
 
-    - name: Determine Installation Pattern - Parallel or Serial - No Service 
+    - name: Determine Installation Pattern - Parallel or Serial - No Service
       set_fact:
         install_pattern: "{{ 'parallel' if kafka_broker_deployment_strategy == 'parallel' else 'serial' }}"
 
