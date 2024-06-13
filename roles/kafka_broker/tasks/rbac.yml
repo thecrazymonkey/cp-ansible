@@ -36,11 +36,16 @@
     super_users: "{{ super_users + [ hostvars[item]['kafka_broker_principal'] ] }}"
   loop: "{{ groups['kafka_broker'] }}"
 
-- name: Add Each Controller's Principal to Broker's Super Users List
-  set_fact:
-    super_users: "{{ super_users + [ hostvars[item]['kafka_controller_principal'] ] }}"
+- name: Add Controller's Principal to Broker's Super Users List
+  include_tasks: set_controller_principal_on_broker.yml
+  vars:
+    controller_host: "{{ item }}"
   loop: "{{ groups['kafka_controller'] }}"
-  when: kraft_enabled|bool and kafka_controller_ssl_mutual_auth_enabled|bool
+  args:
+    apply:
+      delegate_to: "{{item}}"
+  run_once: true  
+  when: kraft_enabled|bool and kafka_controller_ssl_mutual_auth_enabled|bool and 'kafka_controller' not in ansible_skip_tags
 
 - name: Remove Duplicates and Convert to String
   set_fact:
@@ -72,6 +77,7 @@
       delegate_to: "{{item}}"
   when: kraft_enabled|bool and kafka_controller_ssl_mutual_auth_enabled|bool
   run_once: true
+  tags: kafka_controller
 
 # reset the Controller's properties to the original properties when Controller and Broker colocated
 - set_fact:

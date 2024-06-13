@@ -1,0 +1,10 @@
+- name: Load server.properties of Kafka Controller
+  delegate_to: "{{ controller_host }}"
+  slurp:
+    src: "{{ kafka_controller.config_file }}"
+  register: slurped_properties
+
+- name: Extract Kafka Controller's Super Users
+  set_fact:
+    super_users: "{{ super_users + ((slurped_properties.content|b64decode).split('\n') | select('match', '^super.users*') | list \
+      | first | regex_replace('^[-a-zA-Z0-9.]*[ ]?=[ ]?(.*)$', '\\1')) | split(';') }}"

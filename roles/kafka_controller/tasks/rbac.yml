@@ -29,6 +29,7 @@
 - name: Initialize Super Users List
   set_fact:
     super_users: "{{ (kafka_controller_final_properties['super.users'] | default('')).split(';') | difference(['']) + [ 'User:' + lookup('vars', 'mds_super_user') ]}}"
+    broker_users: []
 
 # Loop over each controllers principal and add to list
 - name: Add Each Controller's Principal to Super Users List
@@ -36,9 +37,28 @@
     super_users: "{{ super_users + [ hostvars[item]['kafka_controller_principal'] ] }}"
   loop: "{{ groups['kafka_controller'] }}"
 
+- name: Add Broker's Principal to Controller's Super Users List
+  include_tasks: set_broker_principal_on_controller.yml
+  vars:
+    broker_host: "{{ item }}"
+  loop: "{{ groups['kafka_broker'] }}"
+  args:
+    apply:
+      delegate_to: "{{item}}"
+  when: ssl_mutual_auth_enabled|bool
+  run_once: true
+  
+- name: Debug Broker Users
+  ansible.builtin.debug:
+    msg: "broker_users is {{ broker_users }}"
+
 - name: Remove Duplicates and Convert to String
   set_fact:
-    super_users: "{{ super_users | unique | join(';') }}"
+    super_users: "{{ (super_users + broker_users) | unique | join(';') }}"
+
+- name: Debug Super Users
+  ansible.builtin.debug:
+    msg: "super_users is {{ super_users }}"
 
 - name: Add Super Users list to Kafka Properties
   set_fact:

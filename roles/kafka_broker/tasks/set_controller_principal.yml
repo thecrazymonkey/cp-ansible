@@ -12,13 +12,13 @@
 
 - name: Remove Duplicates and Convert to String
   set_fact:
-    broker_principals: "{{ broker_principals | unique | join(';') }}"
+    broker_principals: "{{ (hostvars[controller_host]['super_users']|split(';') + broker_principals) | unique | join(';') }}"
 
 - name: Add Super Users list to Kafka Controller Properties
   set_fact:
     kafka_controller_final_properties: "{{ hostvars[controller_host]['kafka_controller_final_properties'] | combine(
       {
-          'super.users': hostvars[controller_host]['super_users'] + ';' + broker_principals
+          'super.users': broker_principals
       }
     ) }}"
 

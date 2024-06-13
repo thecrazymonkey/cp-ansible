@@ -1,0 +1,19 @@
+---
+- name: Check For Broker Properties File
+  delegate_to: "{{ broker_host }}"
+  stat:
+    path: "{{ kafka_broker.config_file }}"
+  register: stat_result
+
+- name: Load server.properties of Kafka Broker
+  delegate_to: "{{ broker_host }}"
+  slurp:
+    src: "{{ kafka_broker.config_file }}"
+  register: slurped_properties
+  when: stat_result.stat.exists  
+
+- name: Extract Kafka Broker's Super Users
+  set_fact:
+    broker_users: "{{ broker_users + ((slurped_properties.content|b64decode).split('\n') | select('match', '^super.users*') | list \
+      | first | regex_replace('^[-a-zA-Z0-9.]*[ ]?=[ ]?(.*)$', '\\1')) | split(';') }}"
+  when: stat_result.stat.exists
